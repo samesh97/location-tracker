@@ -27,11 +27,24 @@ public class InviteCodeActivity extends AppCompatActivity
     TextView inviteCode;
     String code;
     Button copyButton;
+    //AdView adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_invite_code);
+
+
+        /*                                 ADS HERE                      */
+
+        //MobileAds.initialize(this,"ca-app-pub-3538783908730049~2561325174");
+        //adView = (AdView) findViewById(R.id.adView);
+        //AdRequest adRequest = new AdRequest.Builder().build();
+       // adView.loadAd(adRequest);
+
+
+
+
 
         firebaseAuth = FirebaseAuth.getInstance();
         user = firebaseAuth.getCurrentUser();

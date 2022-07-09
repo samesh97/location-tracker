@@ -3,6 +3,7 @@
     package="com.sba.xtrack">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
@@ -20,7 +21,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/SplashScreen">
-        <activity android:name=".SplashScreen">
+        <activity android:name=".SplashScreen"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -29,23 +31,29 @@
         </activity>
         <activity
             android:name=".ResetPassword"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AppTheme"
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".LoggedOnScreen"
             android:label="@string/title_activity_logged_on_screen"
-            android:theme="@style/SplashScreen" />
+            android:theme="@style/SplashScreen"
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".InviteCodeActivity"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AppTheme"
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".AddToTrack"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AppTheme"
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".LoginScreen"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AppTheme"
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".RegisterScreen"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AppTheme"
+            android:screenOrientation="portrait"/>
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -58,11 +66,10 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-        <activity android:name=".TrackingList" />
-        <activity android:name=".Setup"></activity>
-
-        <service android:name=".BackgroundService"
-            android:exported="false"/>
+        <activity android:name=".TrackingList"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".Setup"
+            android:screenOrientation="portrait"></activity>
     </application>
 
 </manifest>

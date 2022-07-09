@@ -27,6 +27,7 @@ public class LoginScreen extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
     FirebaseUser user;
     private ProgressDialog progressDialog;
+    //AdView adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +46,11 @@ public class LoginScreen extends AppCompatActivity {
         }*/
 
         setContentView(R.layout.activity_login_screen);
+
+       // MobileAds.initialize(this,"ca-app-pub-3538783908730049~2561325174");
+       // adView = (AdView) findViewById(R.id.adView);
+       // AdRequest adRequest = new AdRequest.Builder().build();
+       // adView.loadAd(adRequest);
 
         loginButton = (Button) findViewById(R.id.loginButton);
         loginEmail = (EditText) findViewById(R.id.loginEmail);
@@ -106,8 +112,6 @@ public class LoginScreen extends AppCompatActivity {
                                             Intent intent = new Intent(LoginScreen.this, LoggedOnScreen.class);
                                             startActivity(intent);
                                             finish();
-                                            Intent service = new Intent(LoginScreen.this,BackgroundService.class);
-                                            startService(service);
                                         }
                                         else
                                         {

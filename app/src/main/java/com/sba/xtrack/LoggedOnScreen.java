@@ -1,22 +1,30 @@
 package com.sba.xtrack;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.se.omapi.SEService;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -26,7 +34,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,20 +68,33 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import org.aviran.cookiebar2.CookieBar;
+import org.aviran.cookiebar2.OnActionClickListener;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-public class LoggedOnScreen extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks
+import static com.sba.xtrack.R.layout.card_layout;
+import static com.sba.xtrack.R.layout.listview;
+
+public class LoggedOnScreen extends AppCompatActivity implements RecyclerViewAdapter.MembersViewHolder.OnItemClickListener
+        , NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks
         , GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     FirebaseAuth firebaseAuth;
-    DatabaseReference databaseReference;
+    DatabaseReference databaseReference,databaseReference2;
     FirebaseUser user;
     DatabaseReference getLatLng;
+    ProgressDialog dialog;
+    RecyclerView.LayoutManager layoutManager;
 
     Boolean locationEnabled,checkPermission;
     LocationManager locationManager;
+    String cityName;
+
+    int itemCount = 0;
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
@@ -93,6 +121,9 @@ public class LoggedOnScreen extends AppCompatActivity
     double usersLatitude;
     double usersLongitude;
 
+    RecyclerView recyclerView;
+
+
     String trackingUsersLatitude,trackingUsersLongitude;
 
     LatLng userLocation;
@@ -101,6 +132,11 @@ public class LoggedOnScreen extends AppCompatActivity
     Boolean isFirstTime = true;
 
     final List<String> usersIds = new ArrayList<>();
+    final List<String> trackingNames = new ArrayList<>();
+
+    final List<Double> trackingLat = new ArrayList<>();
+    final List<Double> trackingLon = new ArrayList<>();
+    RecyclerViewAdapter adaptor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,10 +145,34 @@ public class LoggedOnScreen extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        dialog = new ProgressDialog(LoggedOnScreen.this);
+        dialog.setMessage("Getting Things Ready..");
+        dialog.setCancelable(false);
+        dialog.show();
+
+
+        recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+
+        //ecyclerView.setHasFixedSize(true);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /* Check GPS Enabled or Not  */
 
         locationEnabled = isLocationEnabled();
-        if(locationEnabled == false)
+        if(!locationEnabled)
         {
             AlertDialog.Builder builder = new AlertDialog.Builder(LoggedOnScreen.this);
             builder.setTitle("GPS is not enabled")
@@ -256,14 +316,11 @@ public class LoggedOnScreen extends AppCompatActivity
         {
             FirebaseUser user = firebaseAuth.getCurrentUser();
 
-            if (user != null)
-            {
+            if (user != null) {
                 firebaseAuth.signOut();
                 Intent intent = new Intent(LoggedOnScreen.this, LoginScreen.class);
                 startActivity(intent);
                 finish();
-                Intent service = new Intent(LoggedOnScreen.this,BackgroundService.class);
-                stopService(service);
 
             }
             else
@@ -271,7 +328,6 @@ public class LoggedOnScreen extends AppCompatActivity
                 Intent intent = new Intent(LoggedOnScreen.this, LoginScreen.class);
                 startActivity(intent);
                 finish();
-
             }
 
         }
@@ -328,17 +384,28 @@ public class LoggedOnScreen extends AppCompatActivity
     @Override
     public void onLocationChanged(Location location)
     {
+
+
         if(location == null)
         {
             Toast.makeText(LoggedOnScreen.this,"Unable to get Location!",Toast.LENGTH_SHORT).show();
         }
         else
         {
-            userLocation = new LatLng(location.getLatitude(),location.getLongitude());
-            options = new MarkerOptions();
-            options.position(userLocation);
-            options.title("Your Location");
+            if(isFirstTime)
+            {
+                userLocation = new LatLng(location.getLatitude(),location.getLongitude());
+                options = new MarkerOptions();
+                options.position(userLocation);
+                options.title("Your Location");
+                mMap.addMarker(options);
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
+                mMap.animateCamera( CameraUpdateFactory.zoomTo( 15.0f ));
 
+
+
+
+            }
 
             usersLatitude = location.getLatitude();
             usersLongitude = location.getLongitude();
@@ -404,33 +471,103 @@ public class LoggedOnScreen extends AppCompatActivity
             }
             else
             {
-                databaseReference = FirebaseDatabase.getInstance().getReference().child("Users").child(user.getUid()).child("JoinedMembers");
+                if(isFirstTime)
+                {
+                    isFirstTime = false;
+                    databaseReference = FirebaseDatabase.getInstance().getReference().child("Users").child(user.getUid()).child("JoinedMembers");
 
-                Query query = databaseReference.orderByKey();
+                    Query query = databaseReference.orderByKey();
 
-                query.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot)
-                    {
-                        if(dataSnapshot.exists())
+                    query.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot)
                         {
-                            for(DataSnapshot dss: dataSnapshot.getChildren())
+                            if(dataSnapshot.exists())
                             {
-                                String ID = dss.child("joinedUserId").getValue(String.class);
-
-                                usersIds.add(ID);
-
-                                for(int y=0; y<=usersIds.size()-1; y++)
+                                for(DataSnapshot dss: dataSnapshot.getChildren())
                                 {
-                                    getUsersLocation(usersIds.get(y));
+                                    String ID = dss.child("joinedUserId").getValue(String.class);
 
-                                }
+                                    databaseReference2 = FirebaseDatabase.getInstance().getReference().child("Users").child(ID);
+
+                                    databaseReference2.addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot)
+                                        {
+                                            String Na = dataSnapshot.child("name").getValue(String.class);
+                                            trackingNames.add(Na);
+
+                                            adaptor.notifyDataSetChanged();
+                                        }
+
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                        }
+                                    });
+
+                                    databaseReference2.child("Latitude").addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot)
+                                        {
+                                            if(dataSnapshot.exists())
+                                            {
+                                                Double lat = dataSnapshot.child("latitude").getValue(Double.class);
+                                                trackingLat.add(lat);
+                                                adaptor.notifyDataSetChanged();
+
+                                            }
+                                            else
+                                            {
+                                                trackingLat.add(0.0);
+                                            }
+
+
+                                        }
+
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                        }
+                                    });
+                                    databaseReference2.child("Longitude").addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot)
+                                        {
+                                            if(dataSnapshot.exists())
+                                            {
+                                                Double lon = dataSnapshot.child("latitude").getValue(Double.class);
+                                                trackingLon.add(lon);
+
+                                            }
+                                            else
+                                            {
+                                                trackingLon.add(0.0);
+                                            }
+
+                                        }
+
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                        }
+                                    });
+
+
+                                    usersIds.add(ID);
+
+
+                                    for(int y=0; y<=usersIds.size()-1; y++)
+                                    {
+                                        getUsersLocation(usersIds.get(y));
+
+                                    }
                             /*
 
                             double latitude =  Double.parseDouble(trackingUsersLatitude);
                             double longitude = Double.parseDouble(trackingUsersLongitude);*/
 
-                                // create marker
+                                    // create marker
                             /*MarkerOptions marker = new MarkerOptions().position(new LatLng(7.786666, 85.98766));
 
                             mMap.addMarker(marker);
@@ -439,24 +576,60 @@ public class LoggedOnScreen extends AppCompatActivity
 
                             /*
                             Toast.makeText(LoggedOnScreen.this,ID,Toast.LENGTH_SHORT).show();*/
-                            }
+                                }
 
+
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError)
+                        {
 
                         }
-                    }
+                    });
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError)
-                    {
+                }
 
-                    }
-                });
+
+
+                //listView.invalidate();
+
+
+
             }
 
 
+
+
         }
-        mMap.addMarker(options);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
+        if(adaptor == null)
+        {
+
+
+
+                layoutManager = new LinearLayoutManager(this);
+                recyclerView.setLayoutManager(layoutManager);
+                recyclerView.setVisibility(View.VISIBLE);
+                adaptor = new RecyclerViewAdapter(trackingNames,LoggedOnScreen.this);
+                recyclerView.setAdapter(adaptor);
+                adaptor.notifyDataSetChanged();
+                dialog.dismiss();
+
+
+
+
+        }
+        else
+        {
+            adaptor.notifyDataSetChanged();
+            dialog.dismiss();
+        }
+
+
+
+
+
 
     }
 
@@ -480,12 +653,13 @@ public class LoggedOnScreen extends AppCompatActivity
                 MarkerOptions marker = new MarkerOptions().position(new LatLng(latitude,longitude)).title(name);
                 LatLng latLng = new LatLng(latitude,longitude);
                 mMap.addMarker(marker);
-                if (isFirstTime.equals(true))
-                {
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-                    mMap.animateCamera( CameraUpdateFactory.zoomTo( 18.0f ));
-                    isFirstTime = false;
-                }
+                //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,15));
+
+
+                //mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+                //mMap.animateCamera( CameraUpdateFactory.zoomTo( 15.0f ));
+
+
 
             }
 
@@ -509,4 +683,48 @@ public class LoggedOnScreen extends AppCompatActivity
             return true;
         }
     }
+
+    @Override
+    public synchronized void onItemClick(int position)
+    {
+        try
+        {
+            if(position >= 0)
+            {
+                LatLng clickedLocation = new LatLng(trackingLat.get(position),trackingLon.get(position));
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(clickedLocation));
+                mMap.animateCamera( CameraUpdateFactory.zoomTo( 15.0f ));
+
+                getAddressFromLatitude(clickedLocation);
+
+                CookieBar.build(LoggedOnScreen.this)
+                        .setTitle("User Current Location")
+                        .setCookiePosition(CookieBar.TOP)
+                        .setBackgroundColor(R.color.colorPrimary)
+                        .setTitleColor(R.color.white)
+                        .setIcon(R.drawable.ic_person)
+                        //.setIconAnimation(R.animator.spin)
+                        .setMessage(cityName)
+                        .setDuration(5000)
+                        .show();
+
+
+            }
+        }
+        catch(Exception e)
+        {
+
+        }
+
+
+    }
+    public synchronized void getAddressFromLatitude(LatLng MyLat) throws IOException
+    {
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        List<Address> addresses = geocoder.getFromLocation(MyLat.latitude, MyLat.longitude, 1);
+        cityName = addresses.get(0).getAddressLine(0);
+        String stateName = addresses.get(0).getAddressLine(1);
+        String countryName = addresses.get(0).getAddressLine(2);
+    }
 }
+

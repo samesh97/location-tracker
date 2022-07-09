@@ -4,11 +4,18 @@
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:cardview="http://schemas.android.com/tools"
-    android:layout_margin="6dp"
+    android:layout_margin="2dp"
     cardview:cardElevation="3dp"
     cardview:cardCornerRadius="12dp"
     cardview:contentPadding="4dp"
     android:foreground="?selectableItemBackground">
+
+    <android.support.constraint.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
 <!--
     <LinearLayout
@@ -25,26 +32,33 @@
             -->
 
 
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_weight="2"
-        android:src="@drawable/ic_person"
-        android:layout_marginLeft="1dp"/>
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:layout_weight="2"
+            android:src="@drawable/ic_person"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
 
-    <TextView
-        android:id="@+id/itemTitle"
-        android:layout_width="144dp"
-        android:layout_height="match_parent"
-        android:layout_weight="7"
-        android:text="Name"
-        android:textColor="#000000"
-        android:textSize="16sp"
-        android:layout_marginLeft="95dp"
-        android:layout_marginTop="12dp"
-        android:textStyle="bold" />
+        <TextView
+            android:id="@+id/itemTitle"
+            android:layout_width="144dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_weight="7"
+            android:text="Name"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/imageView"
+            app:layout_constraintStart_toEndOf="@+id/imageView"
+            app:layout_constraintTop_toTopOf="@+id/imageView" />
 
     <!--
 
@@ -65,5 +79,29 @@
 
 
     </LinearLayout> -->
+
+    <Button
+        android:id="@+id/deleteButton"
+        android:layout_width="89dp"
+        android:layout_height="33dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/redlistbuttonbackground"
+        android:clickable="false"
+        android:focusable="false"
+        android:text="Remove"
+        android:textColor="#ffffff"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/Name"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    </android.support.constraint.ConstraintLayout>
 
 </android.support.v7.widget.CardView>
